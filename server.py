@@ -1,6 +1,7 @@
 """Defines server helper methods."""
 from http.server import HTTPServer, BaseHTTPRequestHandler
 from .http.utils import HttpStatusCode
+from .endpoints.endpoint import RestEndpoint
 import re
 
 
@@ -31,23 +32,25 @@ class GenericRequestHandler(BaseHTTPRequestHandler):
 
     def delegate(self, method_name):
         """Delegate to the correct handler method."""
-        try:
-            resolver = URLPathResolver(GenericRequestHandler.urlpatterns)
-            handler = resolver.resolve(self.path.__str__())()
-            handler.httpHandler = self
-            method = getattr(handler, method_name)
-            method()
-        except:
-            self.send_response(
-                HttpStatusCode.NOT_IMPLEMENTED['code']
-                )
-            self.end_headers()
-            self.wfile.write(
-                    bytes(
-                            HttpStatusCode.NOT_IMPLEMENTED['description'],
-                            "utf8"
-                        )
-                )
+        # try:
+        resolver = URLPathResolver(GenericRequestHandler.urlpatterns)
+        handler = resolver.resolve(self.path.__str__())()
+        handler.httpHandler = self
+        method = getattr(handler, method_name)
+        print('Method: ', method.__name__)
+        method()
+        print('After Method: ', method.__name__)
+        # except:
+        # self.send_response(
+        #     HttpStatusCode.NOT_IMPLEMENTED['code']
+        #     )
+        # self.end_headers()
+        # self.wfile.write(
+        #         bytes(
+        #                 HttpStatusCode.NOT_IMPLEMENTED['description'],
+        #                 "utf8"
+        #             )
+        #     )
 
     def do_GET(self):
         """Server GET Method in a generic way."""
@@ -73,6 +76,7 @@ class GenericRequestHandler(BaseHTTPRequestHandler):
         """Server DELETE Method in a generic way."""
         self.delegate('do_DELETE')
         return
+
 
 endpoints = {}
 
@@ -103,3 +107,22 @@ def register_endpoint(url, endpoint):
     global endpoints
     qPat = r"\??([a-zA-Z1-9]*=[a-zA-Z1-9]*){0,1}(&[a-zA-Z1-9]*=[a-zA-Z1-9]*)?$"
     endpoints[url+qPat] = endpoint
+
+
+def route(path, methods=['get']):
+    def do(fn):
+        """Decorator for registering an endpoint"""
+        class Any(RestEndpoint):
+            pass
+
+        def wrapper(*args, **kwargs):
+            print('Doing wrapping for path', path, 'on function', fn.__name__)
+            return fn(*args, **kwargs)
+
+        for method in methods:
+            print('registering ', 'do_' + method, 'on path', path)
+            setattr(Any, 'do_' + method, wrapper)
+
+        register_endpoint(path, Any)
+        return fn
+    return do

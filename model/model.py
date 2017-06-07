@@ -1,5 +1,6 @@
 """."""
 from pymongo import MongoClient
+import json
 
 
 class EntityDoesntExistException(Exception):
@@ -108,10 +109,14 @@ class Model(object):
             obj.__setattr__(attr, doc[attr])
         return obj
 
+    def json(self):
+        """returns the class as a json"""
+        return json.dumps(self.__dict__)
+
+
 #
 # Module Testing
 #
-
 if (__name__ == "__main__"):
     class TestModel(Model):
         """."""

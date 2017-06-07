@@ -2,7 +2,7 @@
 
 Here are defined the base classes for the Endpoints definition.
 """
-from .http.utils import HttpStatusCode
+from ..http.utils import HttpStatusCode
 
 
 class RestEndpoint(object):
@@ -32,8 +32,9 @@ class RestEndpoint(object):
         self.httpHandler.send_response(self.response['code'])
         if self.headers is not None:
             for h in self.headers:
+                print(h, '--> ', self.headers[h])
                 self.httpHandler.send_header(h, self.headers[h])
-        self.httpHandler.end_headers()
+            self.httpHandler.end_headers()
         if (self.message is not None):
             self.httpHandler.wfile.write(bytes(self.message, "utf8"))
         else:
@@ -52,7 +53,7 @@ class RestEndpoint(object):
         """Method to handle GET HTTP method that raise an exception."""
         try:
             self.do_get()
-        except:
+        except NameError:
             self.fill_not_implemented_response()
         self.prepare_response()
 
@@ -60,7 +61,7 @@ class RestEndpoint(object):
         """Method to handle POST HTTP method that raise an exception."""
         try:
             self.do_post()
-        except:
+        except NameError:
             self.fill_not_implemented_response()
         self.prepare_response()
 
@@ -68,7 +69,7 @@ class RestEndpoint(object):
         """Method to handle DELETE HTTP method that raise an exception."""
         try:
             self.do_delete()
-        except:
+        except NameError:
             self.fill_not_implemented_response()
         self.prepare_response()
 
@@ -76,7 +77,7 @@ class RestEndpoint(object):
         """Method to handle PUT HTTP method that raise an exception."""
         try:
             self.do_put()
-        except:
+        except NameError:
             self.fill_not_implemented_response()
         self.prepare_response()
 
@@ -84,6 +85,19 @@ class RestEndpoint(object):
         """Method to handle OPTIONS HTTP method that raise an exception."""
         try:
             self.do_options()
-        except:
+        except NameError:
             self.fill_not_implemented_response()
         self.prepare_response()
+
+    def message(self, message):
+        """Define the message for the response."""
+        self.message = message
+
+    def json(self, data):
+        """Respond with a json. This method already adds the header."""
+        self.add_header('Content-Type', 'application/json')
+        self.message = data
+
+    def status(self, httpStatus):
+        """Set the status code object for the response."""
+        self.response = httpStatus
